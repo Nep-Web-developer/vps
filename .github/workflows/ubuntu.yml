@@ -1,0 +1,57 @@
+name: Free Ubuntu VPS (6 Hours)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH + ngrok + Tools
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        run: |
+          # Update system
+          sudo apt-get update -y
+          sudo apt-get install -y openssh-server curl wget git
+
+          # Enable SSH
+          sudo systemctl enable ssh
+          sudo systemctl start ssh
+
+          # Set password (यहाँ आफ्नो password राख्नुहोस्)
+          echo "runner:Kali@12345" | sudo chpasswd
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh
+
+          # Install ngrok
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt-get update -y
+          sudo apt-get install -y ngrok
+
+          # Start ngrok
+          ngrok config add-authtoken $NGROK_AUTH_TOKEN
+          ngrok tcp 22 --log=stdout > ngrok.log &
+          sleep 8
+
+          # Show connection info
+          echo "=============================================="
+          echo "SSH INFO:"
+          grep -o 'tcp://[^ ]*' ngrok.log || true
+          echo "Username : runner"
+          echo "Password : Su@12345"
+          echo "=============================================="
+
+          # Install useful Kali tools
+          sudo apt-get install -y nmap hydra sqlmap nikto john hashcat netcat-traditional whois dnsutils traceroute
+
+      - name: Keep Alive (6 hours)
+        run: sleep 6h
