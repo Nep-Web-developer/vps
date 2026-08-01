@@ -17,19 +17,17 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y openssh-server
 
-          # Enable SSH
           sudo systemctl enable ssh
           sudo systemctl start ssh
 
-          # Password set
           echo "runner:Su@12345" | sudo chpasswd
           sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo systemctl restart ssh
 
-          # Start tunnel using localhost.run
+          # localhost.run tunnel
           ssh -o StrictHostKeyChecking=no -R 80:localhost:22 nokey@localhost.run > tunnel.log 2>&1 &
-          sleep 12
+          sleep 15
 
           echo "=============================================="
           echo "SSH INFO:"
@@ -39,7 +37,6 @@ jobs:
           echo "Password : Su@12345"
           echo "=============================================="
 
-          # Install tools
           sudo apt-get install -y nmap hydra sqlmap nikto john hashcat netcat-traditional whois dnsutils
 
       - name: Keep Alive (6 hours)
