@@ -27,13 +27,14 @@ jobs:
           sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
           sudo systemctl restart ssh
 
-          # Start SSH tunnel using serveo (no card needed)
-          ssh -o StrictHostKeyChecking=no -R 80:localhost:22 serveo.net &
-          sleep 10
+          # Start tunnel using localhost.run
+          ssh -o StrictHostKeyChecking=no -R 80:localhost:22 nokey@localhost.run > tunnel.log 2>&1 &
+          sleep 12
 
           echo "=============================================="
           echo "SSH INFO:"
-          echo "Command: ssh -p 80 runner@serveo.net"
+          cat tunnel.log
+          echo ""
           echo "Username : runner"
           echo "Password : Su@12345"
           echo "=============================================="
