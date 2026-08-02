@@ -1,46 +1,38 @@
-name: Free Ubuntu VPS (6 Hours)
+name: Free VPS Runner
 
 on:
   workflow_dispatch:
 
 jobs:
-  vps:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
-
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup SSH + Tunnel
+      - name: Install Essential Tools & EyeWitness Dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y openssh-server curl
+          sudo apt-get install -y openssh-server curl wget git python3 python3-pip chromium-browser eyewitness
 
-          sudo systemctl enable ssh
-          sudo systemctl start ssh
-
+      - name: Setup SSH Password
+        run: |
           echo "runner:Su@12345" | sudo chpasswd
-          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          sudo systemctl restart ssh
+          sudo service ssh start
 
-          # Install and run bore
-          curl -L https://github.com/ekzhang/bore/releases/download/v0.5.1/bore-v0.5.1-x86_64-unknown-linux-musl.tar.gz -o bore.tar.gz
-          tar -xzf bore.tar.gz
-          chmod +x bore
-          ./bore local 22 --to bore.pub > tunnel.log 2>&1 &
-          sleep 12
+      - name: Install & Run Bore Tunnel
+        run: |
+          wget https://github.com/ekzhang/bore/releases/download/v0.5.0/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz
+          tar -xf bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz
+          sudo mv bore /usr/local/bin/
+          bore local 22 --to bore.pub &
 
-          echo "=============================================="
-          echo "SSH INFO:"
-          cat tunnel.log
-          echo ""
-          echo "Username : runner"
-          echo "Password : Su@12345"
-          echo "=============================================="
+      - name: Setup Web Terminal & Backup SSH (tmate)
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: false
 
-          sudo apt-get install -y nmap hydra sqlmap nikto john hashcat netcat-traditional whois dnsutils
-
-      - name: Keep Alive (6 hours)
-        run: sleep 6h
+      - name: Keep Alive Loop
+        run: |
+          echo "VPS is running..."
+          sleep 6 hours
