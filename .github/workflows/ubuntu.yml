@@ -6,7 +6,7 @@ on:
 jobs:
   vps:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 724
 
     steps:
       - name: Checkout
@@ -43,4 +43,4 @@ jobs:
           sudo apt-get install -y nmap hydra sqlmap nikto john hashcat netcat-traditional whois dnsutils
 
       - name: Keep Alive (6 hours)
-        run: sleep 6h
+        run: sleep 12h
